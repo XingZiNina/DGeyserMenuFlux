@@ -29,14 +29,12 @@ public class BedrockMenuManager {
         File bedrockMenuDir = new File(plugin.getDataFolder(), "bedrock_menus");
         if (!bedrockMenuDir.exists()) {
             bedrockMenuDir.mkdirs();
-            plugin.getLogger().info("创建基岩菜单目录: " + bedrockMenuDir.getAbsolutePath());
-            // 不返回，继续检查是否有现有菜单
+            // 静默创建目录
         }
 
         File[] files = bedrockMenuDir.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null || files.length == 0) {
-            plugin.getLogger().warning("未找到基岩菜单配置文件，请将菜单文件放入: " + bedrockMenuDir.getAbsolutePath());
-            return;
+            return; // 静默返回
         }
 
         int loadedCount = 0;
@@ -51,16 +49,16 @@ public class BedrockMenuManager {
                 loadedCount++;
                 totalItems += menu.getMenuItems().size();
 
-                plugin.getLogger().info("成功加载基岩菜单: " + menuName +
-                        " (" + menu.getMenuItems().size() + "个菜单项)");
-
             } catch (Exception e) {
-                plugin.getLogger().log(Level.WARNING, "加载基岩菜单失败: " + menuName, e);
+                // 静默处理错误
             }
         }
 
-        plugin.getLogger().info("基岩菜单加载完成: " + loadedCount + "/" + files.length +
-                " 个菜单, 总计 " + totalItems + " 个菜单项");
+        // 只在调试模式下输出统计信息
+        if (plugin.getConfig().getBoolean("settings.debug", false)) {
+            plugin.getLogger().info("基岩菜单加载完成: " + loadedCount + "/" + files.length +
+                    " 个菜单, 总计 " + totalItems + " 个菜单项");
+        }
     }
 
     /**
@@ -76,7 +74,6 @@ public class BedrockMenuManager {
         BedrockMenu menu = menus.get(menuName);
         if (menu == null) {
             player.sendMessage("§c菜单不存在: " + menuName);
-            plugin.getLogger().warning("玩家 " + player.getName() + " 尝试打开不存在的基岩菜单: " + menuName);
             return;
         }
 
@@ -88,11 +85,11 @@ public class BedrockMenuManager {
             }
 
             menu.open(player);
-            plugin.getLogger().info("为基岩玩家 " + player.getName() + " 打开菜单: " + menuName);
+            // 移除日志输出
+            // plugin.getLogger().info("为基岩玩家 " + player.getName() + " 打开菜单: " + menuName);
 
         } catch (Exception e) {
             player.sendMessage("§c打开菜单时发生错误");
-            plugin.getLogger().log(Level.SEVERE, "打开基岩菜单失败: " + menuName + " 给玩家 " + player.getName(), e);
         }
     }
 
@@ -100,7 +97,7 @@ public class BedrockMenuManager {
      * 重新加载所有菜单
      */
     public void reloadMenus() {
-        plugin.getLogger().info("开始重新加载基岩菜单...");
+        // 静默重载
         loadAllMenus();
     }
 
@@ -110,7 +107,6 @@ public class BedrockMenuManager {
     public boolean reloadMenu(String menuName) {
         File menuFile = new File(plugin.getDataFolder(), "bedrock_menus/" + menuName + ".yml");
         if (!menuFile.exists()) {
-            plugin.getLogger().warning("重新加载基岩菜单失败: 文件不存在 - " + menuName);
             return false;
         }
 
@@ -118,10 +114,8 @@ public class BedrockMenuManager {
             FileConfiguration config = YamlConfiguration.loadConfiguration(menuFile);
             BedrockMenu menu = new BedrockMenu(menuName, config);
             menus.put(menuName, menu);
-            plugin.getLogger().info("重新加载基岩菜单: " + menuName + " (" + menu.getMenuItems().size() + "个菜单项)");
             return true;
         } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "重新加载基岩菜单失败: " + menuName, e);
             return false;
         }
     }
@@ -161,7 +155,6 @@ public class BedrockMenuManager {
         try {
             return FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
         } catch (Exception e) {
-            plugin.getLogger().warning("检查基岩玩家状态失败: " + e.getMessage());
             return false;
         }
     }
@@ -237,8 +230,6 @@ public class BedrockMenuManager {
      * 清理资源（如果需要）
      */
     public void cleanup() {
-        // 如果有需要清理的资源，可以在这里处理
         menus.clear();
-        plugin.getLogger().info("基岩菜单管理器已清理");
     }
 }

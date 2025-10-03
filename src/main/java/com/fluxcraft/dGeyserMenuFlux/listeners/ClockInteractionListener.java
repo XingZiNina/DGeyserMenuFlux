@@ -40,6 +40,7 @@ public class ClockInteractionListener implements Listener {
         // 打开菜单
         clockManager.openMenuWithClock(event.getPlayer());
 
-        plugin.getLogger().info("玩家 " + event.getPlayer().getName() + " 使用钟表打开菜单");
+        // 移除日志输出
+        // plugin.getLogger().info("玩家 " + event.getPlayer().getName() + " 使用钟表打开菜单");
     }
 }

@@ -1,0 +1,176 @@
+# Java版菜单示例 - 主菜单
+menu_title: "&6&l主菜单 &7| &f服务器名称"
+rows: 6
+
+items:
+  # 服务器信息
+  server_info:
+    slot: 10
+    material: KNOWLEDGE_BOOK
+    display_name: "&e&l服务器信息"
+    lore:
+      - "&7点击查看服务器信息"
+      - ""
+      - "&f在线玩家: &a%server_online%&f/&a%server_max_players%"
+      - "&fTPS: &a%server_tps%"
+      - "&f版本: &a%server_version%"
+      - ""
+      - "&e点击查看详细信息"
+    left_click_commands:
+      - "[message] &6=== 服务器信息 ==="
+      - "[message] &f在线玩家: &a%server_online%&f/&a%server_max_players%"
+      - "[message] &f服务器版本: &a%server_version%"
+      - "[message] &f内存使用: &a%server_ram_used%&f/&a%server_ram_max%"
+      - "[message] &f今日在线: &a%statistic_play_one_minute% 分钟"
+
+  # 传送功能
+  teleport_spawn:
+    slot: 12
+    material: COMPASS
+    display_name: "&a&l传送回城"
+    lore:
+      - "&7点击传送至主城"
+      - ""
+      - "&f立即传送至安全的主城"
+      - "&f区域，适合新手玩家"
+      - ""
+      - "&a点击传送"
+    left_click_commands:
+      - "[player] spawn"
+      - "[message] &a已传送至主城!"
+
+  # 个人信息
+  player_info:
+    slot: 14
+    material: PLAYER_HEAD
+    display_name: "&b&l个人信息"
+    lore:
+      - "&7查看您的个人信息"
+      - ""
+      - "&f等级: &e%player_level%"
+      - "&f金钱: &6%vault_eco_balance%"
+      - "&f在线时间: &b%player_time_hours% 小时"
+      - ""
+      - "&b点击查看详情"
+    left_click_commands:
+      - "[message] &6=== 个人信息 ==="
+      - "[message] &f玩家名: &b%player_name%"
+      - "[message] &f等级: &e%player_level%"
+      - "[message] &f经验: &e%player_xp%&f/&e%player_xp_required%"
+      - "[message] &f金钱: &6%vault_eco_balance%"
+      - "[message] &f在线时间: &b%player_time_hours% 小时"
+
+  # 商店系统
+  shop:
+    slot: 16
+    material: EMERALD
+    display_name: "&2&l商店系统"
+    lore:
+      - "&7打开服务器商店"
+      - ""
+      - "&f购买和出售物品"
+      - "&f查看市场行情"
+      - "&f交易系统"
+      - ""
+      - "&2点击打开商店"
+    left_click_commands:
+      - "[menu] shop"
+
+  # 任务系统
+  quests:
+    slot: 28
+    material: BOOK
+    display_name: "&d&l任务系统"
+    lore:
+      - "&7查看可接取的任务"
+      - ""
+      - "&f每日任务"
+      - "&f主线任务"
+      - "&f成就系统"
+      - ""
+      - "&d点击查看任务"
+    left_click_commands:
+      - "[player] quests"
+      - "[message] &d已打开任务菜单"
+
+  # 传送点
+  warps:
+    slot: 30
+    material: ENDER_PEARL
+    display_name: "&5&l传送点"
+    lore:
+      - "&7快速传送至各个地点"
+      - ""
+      - "&f主城 &f| &a矿场 &f| &6地狱"
+      - "&f末地 &f| &b雪地 &f| &c沙漠"
+      - ""
+      - "&5点击选择传送点"
+    left_click_commands:
+      - "[menu] warps"
+
+  # 小游戏
+  minigames:
+    slot: 32
+    material: DIAMOND_SWORD
+    display_name: "&c&l小游戏"
+    lore:
+      - "&7参与各种有趣的小游戏"
+      - ""
+      - "&f躲猫猫 &f| &a起床战争"
+      - "&f空岛战争 &f| &6建筑比赛"
+      - ""
+      - "&c点击查看游戏"
+    left_click_commands:
+      - "[player] games"
+      - "[message] &c小游戏菜单已打开"
+
+  # 帮助信息
+  help:
+    slot: 34
+    material: PAPER
+    display_name: "&9&l帮助信息"
+    lore:
+      - "&7查看服务器帮助"
+      - ""
+      - "&f新手教程"
+      - "&f命令帮助"
+      - "&f规则说明"
+      - ""
+      - "&9点击查看帮助"
+    left_click_commands:
+      - "[player] help"
+      - "[message] &9已打开帮助菜单"
+
+  # 装饰边框
+  border_top:
+    slot: 0-8
+    material: BLACK_STAINED_GLASS_PANE
+    display_name: " "
+  
+  border_bottom:
+    slot: 45-53
+    material: BLACK_STAINED_GLASS_PANE
+    display_name: " "
+
+  border_sides:
+    slot: 
+      - 9
+      - 17
+      - 18
+      - 26
+      - 27
+      - 35
+      - 36
+      - 44
+    material: GRAY_STAINED_GLASS_PANE
+    display_name: " "
+
+  # 关闭按钮
+  close:
+    slot: 49
+    material: BARRIER
+    display_name: "&c&l关闭菜单"
+    lore:
+      - "&7点击关闭此菜单"
+    left_click_commands:
+      - "[close]"

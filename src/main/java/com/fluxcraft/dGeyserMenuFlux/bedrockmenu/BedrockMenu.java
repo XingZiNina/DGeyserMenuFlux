@@ -7,8 +7,6 @@ import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.cumulus.util.FormImage;
 import org.geysermc.floodgate.api.FloodgateApi;
 import me.clip.placeholderapi.PlaceholderAPI;
-
-// 添加缺失的导入
 import com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux;
 
 import java.util.ArrayList;
@@ -18,10 +16,12 @@ public class BedrockMenu {
     private final String name;
     private final FileConfiguration config;
     private final List<BedrockMenuItem> menuItems = new ArrayList<>();
+    private DGeyserMenuFlux plugin;
 
     public BedrockMenu(String name, FileConfiguration config) {
         this.name = name;
         this.config = config;
+        this.plugin = DGeyserMenuFlux.getInstance();
         loadMenuItems();
     }
 
@@ -42,17 +42,8 @@ public class BedrockMenu {
         // 如果都没有，尝试加载最简格式
         else if (config.contains("items")) {
             loadSimpleFormat();
-        } else {
-            Bukkit.getLogger().warning("基岩菜单 '" + name + "' 没有找到有效的菜单项配置");
         }
-
-        Bukkit.getLogger().info("基岩菜单 '" + name + "' 加载了 " + menuItems.size() + " 个菜单项");
-
-        // 调试：打印所有加载的菜单项
-        for (int i = 0; i < menuItems.size(); i++) {
-            BedrockMenuItem item = menuItems.get(i);
-            Bukkit.getLogger().info("菜单项 " + i + ": " + item.getText() + " | 图标: " + item.getIcon());
-        }
+        // 静默处理没有找到配置的情况
     }
 
     /**
@@ -61,7 +52,6 @@ public class BedrockMenu {
     private void loadNewFormat() {
         List<?> items = config.getList("menu.items");
         if (items == null) {
-            Bukkit.getLogger().warning("基岩菜单 '" + name + "' 的 menu.items 不是有效的列表");
             return;
         }
 
@@ -110,8 +100,7 @@ public class BedrockMenu {
                     menuItems.add(menuItem);
                 }
             } catch (Exception e) {
-                Bukkit.getLogger().warning("加载基岩菜单 '" + name + "' 第 " + i + " 个物品失败: " + e.getMessage());
-                e.printStackTrace();
+                // 静默处理错误
             }
         }
     }
@@ -122,7 +111,6 @@ public class BedrockMenu {
     private void loadLegacyFormat() {
         List<?> buttons = config.getList("buttons");
         if (buttons == null) {
-            Bukkit.getLogger().warning("基岩菜单 '" + name + "' 的 buttons 不是有效的列表");
             return;
         }
 
@@ -168,7 +156,7 @@ public class BedrockMenu {
                     menuItems.add(menuItem);
                 }
             } catch (Exception e) {
-                Bukkit.getLogger().warning("加载基岩菜单 '" + name + "' 旧格式按钮 " + i + " 失败: " + e.getMessage());
+                // 静默处理错误
             }
         }
     }
@@ -197,7 +185,7 @@ public class BedrockMenu {
                     menuItems.add(menuItem);
                 }
             } catch (Exception e) {
-                Bukkit.getLogger().warning("加载基岩菜单 '" + name + "' 简单格式项 " + i + " 失败: " + e.getMessage());
+                // 静默处理错误
             }
         }
     }
@@ -219,7 +207,7 @@ public class BedrockMenu {
     }
 
     /**
-     * 为基岩版玩家打开菜单 - 修复选项显示问题
+     * 为基岩版玩家打开菜单
      */
     public void open(Player player) {
         if (!FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
@@ -233,113 +221,71 @@ public class BedrockMenu {
             String subtitle = parsePlaceholders(player, getMenuSubtitle());
             String footer = parsePlaceholders(player, getMenuFooter());
 
-            Bukkit.getLogger().info("=== 开始构建基岩菜单 ===");
-            Bukkit.getLogger().info("菜单名称: " + name);
-            Bukkit.getLogger().info("标题: " + title);
-            Bukkit.getLogger().info("副标题: " + subtitle);
-            Bukkit.getLogger().info("页脚: " + footer);
-            Bukkit.getLogger().info("菜单项数量: " + menuItems.size());
-
-            // 构建内容 - 修复：确保内容正确构建
+            // 构建内容
             StringBuilder contentBuilder = new StringBuilder();
             if (subtitle != null && !subtitle.isEmpty()) {
-                contentBuilder.append(subtitle).append("\n\n");
+                contentBuilder.append(subtitle).append("\n");
             }
 
             String content = contentBuilder.toString();
-
-            Bukkit.getLogger().info("表单内容: " + content);
 
             // 构建表单
             SimpleForm.Builder form = SimpleForm.builder()
                     .title(title)
                     .content(content);
 
-            // 添加菜单项到表单 - 修复：确保每个菜单项都正确添加
+            // 添加菜单项到表单
             if (menuItems.isEmpty()) {
-                Bukkit.getLogger().warning("菜单 '" + name + "' 没有可用的菜单项，添加默认按钮");
                 form.button("§c没有可用的菜单项");
             } else {
-                for (int i = 0; i < menuItems.size(); i++) {
-                    BedrockMenuItem menuItem = menuItems.get(i);
+                for (BedrockMenuItem menuItem : menuItems) {
                     String buttonText = parsePlaceholders(player, menuItem.getText());
-
-                    Bukkit.getLogger().info("添加按钮 " + i + ": " + buttonText);
 
                     if (menuItem.hasIcon()) {
                         FormImage.Type imageType = getImageType(menuItem.getIconType());
-                        String iconPath = menuItem.getIcon();
-                        Bukkit.getLogger().info("按钮图标: " + iconPath + " (类型: " + imageType + ")");
-
-                        try {
-                            form.button(buttonText, FormImage.of(imageType, iconPath));
-                            Bukkit.getLogger().info("✓ 成功添加带图标按钮");
-                        } catch (Exception e) {
-                            Bukkit.getLogger().warning("✗ 添加图标按钮失败，使用无图标按钮: " + e.getMessage());
-                            form.button(buttonText);
-                        }
+                        form.button(buttonText, FormImage.of(imageType, menuItem.getIcon()));
                     } else {
                         form.button(buttonText);
-                        Bukkit.getLogger().info("✓ 成功添加无图标按钮");
                     }
                 }
             }
 
-            // 添加页脚信息 - 修复：正确添加页脚
+            // 添加页脚信息
             if (footer != null && !footer.isEmpty()) {
-                // 重新构建包含页脚的内容
-                String finalContent = content + "\n\n§8" + footer;
+                String finalContent = content + "\n§8" + footer;
                 form.content(finalContent);
-                Bukkit.getLogger().info("最终内容(含页脚): " + finalContent);
             }
 
-            // 构建表单
-            SimpleForm simpleForm = form.build();
-
-            // 处理按钮点击事件
+            // 处理按钮点击事件 - 简化版本
             form.validResultHandler(response -> {
                 try {
                     int clickedIndex = response.clickedButtonId();
-                    Bukkit.getLogger().info("玩家点击了按钮索引: " + clickedIndex);
 
                     if (clickedIndex >= 0 && clickedIndex < menuItems.size()) {
                         BedrockMenuItem clickedItem = menuItems.get(clickedIndex);
-                        Bukkit.getLogger().info("处理菜单项点击: " + clickedItem.getText());
                         handleMenuItemClick(player, clickedItem);
-                    } else {
-                        Bukkit.getLogger().warning("无效的按钮索引: " + clickedIndex);
-                        player.sendMessage("§c无效的选择");
                     }
                 } catch (Exception e) {
-                    Bukkit.getLogger().severe("处理菜单点击时发生错误: " + e.getMessage());
-                    e.printStackTrace();
-                    player.sendMessage("§c处理选择时发生错误");
+                    // 静默处理错误
                 }
             });
 
             // 发送表单给玩家
-            FloodgateApi.getInstance().sendForm(player.getUniqueId(), simpleForm);
-            Bukkit.getLogger().info("✓ 成功为基岩玩家 " + player.getName() + " 发送菜单: " + name);
-            Bukkit.getLogger().info("=== 菜单构建完成 ===");
+            FloodgateApi.getInstance().sendForm(player.getUniqueId(), form.build());
 
         } catch (Exception e) {
             player.sendMessage("§c打开菜单时发生错误");
-            Bukkit.getLogger().severe("✗ 打开基岩菜单 '" + name + "' 失败: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     /**
-     * 处理菜单项点击 - 修复：移除对DGeyserMenuFlux的直接引用
+     * 处理菜单项点击 - 简化版本，直接执行命令
      */
     private void handleMenuItemClick(Player player, BedrockMenuItem menuItem) {
         try {
-            Bukkit.getLogger().info("开始处理菜单项点击: " + menuItem.getText());
-
             // 执行命令
             if (menuItem.getCommand() != null && !menuItem.getCommand().isEmpty()) {
                 String command = parsePlaceholders(player, menuItem.getCommand());
-                Bukkit.getLogger().info("执行命令: '" + command + "', 执行方式: " + menuItem.getExecuteAs());
 
                 // 清理命令格式
                 if (command.startsWith("/")) {
@@ -357,19 +303,15 @@ public class BedrockMenu {
                 return;
             }
 
-            // 打开子菜单 - 修复：通过Bukkit获取插件实例
+            // 打开子菜单
             if (menuItem.getSubmenu() != null && !menuItem.getSubmenu().isEmpty()) {
                 String submenuName = menuItem.getSubmenu().replace(".yml", "");
-                Bukkit.getLogger().info("打开子菜单: " + submenuName);
 
-                // 通过Bukkit获取插件实例，而不是直接引用
-                org.bukkit.plugin.Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("DGeyserMenuFlux");
-                if (plugin instanceof DGeyserMenuFlux) {
-                    DGeyserMenuFlux menuPlugin = (DGeyserMenuFlux) plugin;
-                    menuPlugin.getBedrockMenuManager().openMenu(player, submenuName);
-                } else {
-                    player.sendMessage("§c无法打开子菜单，插件未正确加载");
-                    Bukkit.getLogger().warning("无法获取DGeyserMenuFlux插件实例");
+                // 通过主类打开子菜单
+                com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux plugin =
+                        com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux.getInstance();
+                if (plugin != null) {
+                    plugin.getBedrockMenuManager().openMenu(player, submenuName);
                 }
                 return;
             }
@@ -378,9 +320,7 @@ public class BedrockMenu {
             player.sendMessage("§a你点击了: " + parsePlaceholders(player, menuItem.getText()));
 
         } catch (Exception e) {
-            player.sendMessage("§c执行菜单操作时发生错误");
-            Bukkit.getLogger().severe("处理基岩菜单点击失败: " + e.getMessage());
-            e.printStackTrace();
+            player.sendMessage("§c执行命令时发生错误");
         }
     }
 
@@ -494,16 +434,6 @@ public class BedrockMenu {
         public String getExecuteAs() { return executeAs; }
         public boolean hasIcon() {
             return icon != null && !icon.isEmpty() && !icon.equals("null");
-        }
-
-        @Override
-        public String toString() {
-            return "BedrockMenuItem{" +
-                    "text='" + text + '\'' +
-                    ", icon='" + icon + '\'' +
-                    ", command='" + command + '\'' +
-                    ", submenu='" + submenu + '\'' +
-                    '}';
         }
     }
 }

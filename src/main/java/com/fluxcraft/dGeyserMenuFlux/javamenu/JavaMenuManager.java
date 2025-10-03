@@ -1,6 +1,7 @@
 package com.fluxcraft.dGeyserMenuFlux.javamenu;
 
 import com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -29,18 +30,17 @@ public class JavaMenuManager {
         File javaMenuDir = new File(plugin.getDataFolder(), "java_menus");
         if (!javaMenuDir.exists()) {
             javaMenuDir.mkdirs();
-            plugin.getLogger().info("创建Java菜单目录: " + javaMenuDir.getAbsolutePath());
-            // 不返回，继续检查是否有现有菜单
+            // 静默创建目录，不输出日志
         }
 
         File[] files = javaMenuDir.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null || files.length == 0) {
-            plugin.getLogger().warning("未找到Java菜单配置文件，请将菜单文件放入: " + javaMenuDir.getAbsolutePath());
-            return;
+            return; // 静默返回
         }
 
         int loadedCount = 0;
         int totalSlots = 0;
+        int totalItems = 0;
 
         for (File file : files) {
             String menuName = file.getName().replace(".yml", "");
@@ -50,18 +50,18 @@ public class JavaMenuManager {
                 menus.put(menuName, menu);
                 loadedCount++;
                 totalSlots += menu.getSize();
-
-                plugin.getLogger().info("成功加载Java菜单: " + menuName +
-                        " (" + menu.getRows() + "行, " + menu.getSize() + "格, " +
-                        menu.getItems().size() + "个物品)");
+                totalItems += menu.getItems().size();
 
             } catch (Exception e) {
-                plugin.getLogger().log(Level.WARNING, "加载Java菜单失败: " + menuName, e);
+                // 静默处理错误
             }
         }
 
-        plugin.getLogger().info("Java菜单加载完成: " + loadedCount + "/" + files.length +
-                " 个菜单, 总计 " + totalSlots + " 格物品栏");
+        // 只在调试模式下输出统计信息
+        if (plugin.getConfig().getBoolean("settings.debug", false)) {
+            plugin.getLogger().info("Java菜单加载完成: " + loadedCount + "/" + files.length +
+                    " 个菜单, 总计 " + totalSlots + " 格, " + totalItems + " 个物品");
+        }
     }
 
     /**
@@ -71,7 +71,6 @@ public class JavaMenuManager {
         JavaMenu menu = menus.get(menuName);
         if (menu == null) {
             player.sendMessage("§c菜单不存在: " + menuName);
-            plugin.getLogger().warning("玩家 " + player.getName() + " 尝试打开不存在的Java菜单: " + menuName);
             return;
         }
 
@@ -83,12 +82,12 @@ public class JavaMenuManager {
             }
 
             menu.open(player);
-            plugin.getLogger().info("为玩家 " + player.getName() + " 打开Java菜单: " + menuName +
-                    " (" + menu.getRows() + "行)");
+            // 移除日志输出
+            // plugin.getLogger().info("为玩家 " + player.getName() + " 打开Java菜单: " + menuName +
+            //         " (" + menu.getRows() + "行)");
 
         } catch (Exception e) {
             player.sendMessage("§c打开菜单时发生错误");
-            plugin.getLogger().log(Level.SEVERE, "打开Java菜单失败: " + menuName + " 给玩家 " + player.getName(), e);
         }
     }
 
@@ -96,7 +95,7 @@ public class JavaMenuManager {
      * 重新加载所有菜单
      */
     public void reloadMenus() {
-        plugin.getLogger().info("开始重新加载Java菜单...");
+        // 静默重载，不输出日志
         loadAllMenus();
     }
 
@@ -106,7 +105,6 @@ public class JavaMenuManager {
     public boolean reloadMenu(String menuName) {
         File menuFile = new File(plugin.getDataFolder(), "java_menus/" + menuName + ".yml");
         if (!menuFile.exists()) {
-            plugin.getLogger().warning("重新加载Java菜单失败: 文件不存在 - " + menuName);
             return false;
         }
 
@@ -114,10 +112,8 @@ public class JavaMenuManager {
             FileConfiguration config = YamlConfiguration.loadConfiguration(menuFile);
             JavaMenu menu = new JavaMenu(menuName, config);
             menus.put(menuName, menu);
-            plugin.getLogger().info("重新加载Java菜单: " + menuName + " (" + menu.getRows() + "行)");
             return true;
         } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "重新加载Java菜单失败: " + menuName, e);
             return false;
         }
     }
@@ -192,5 +188,26 @@ public class JavaMenuManager {
 
         return String.format("Java菜单统计: 总数=%d, 总格数=%d, 总物品数=%d, 平均填充=%.1f%%",
                 totalMenus, totalSlots, totalItems, (totalItems * 100.0 / totalSlots));
+    }
+
+    /**
+     * 根据标题查找菜单
+     */
+    public JavaMenu findMenuByTitle(String title) {
+        for (JavaMenu menu : menus.values()) {
+            // 解析标题中的颜色代码进行比较
+            String menuTitle = menu.getTitle().replace("&", "§");
+            if (menuTitle.equals(title)) {
+                return menu;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 检查标题是否是菜单标题
+     */
+    public boolean isMenuTitle(String title) {
+        return findMenuByTitle(title) != null;
     }
 }
