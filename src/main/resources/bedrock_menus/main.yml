@@ -1,0 +1,55 @@
+menu:
+  title: "§l§6主菜单"
+  subtitle: "§7欢迎来到服务器！"
+  footer: "§8在线玩家: %server_online%"
+  items:
+    - text: "§e§l传送大厅"
+      icon: "textures/items/ender_pearl"
+      icon_type: "path"
+      command: "warp lobby"
+      execute_as: "player"
+
+    - text: "§a§l商店系统"
+      icon: "textures/items/emerald"
+      icon_type: "path"
+      submenu: "shop"
+
+    - text: "§b§l传送点"
+      icon: "textures/items/compass"
+      icon_type: "path"
+      submenu: "warps"
+
+    - text: "§d§l技能系统"
+      icon: "textures/items/enchanted_book"
+      icon_type: "path"
+      command: "skills"
+      execute_as: "player"
+
+    - text: "§5§l任务系统"
+      icon: "textures/items/book_written"
+      icon_type: "path"
+      command: "quests"
+      execute_as: "player"
+
+    - text: "§c§l个人信息"
+      icon: "textures/items/paper"
+      icon_type: "path"
+      command: "stats"
+      execute_as: "player"
+
+    - text: "§2§l领地管理"
+      icon: "textures/items/diamond_axe"
+      icon_type: "path"
+      submenu: "residence"
+
+    - text: "§6§l经济系统"
+      icon: "textures/items/gold_ingot"
+      icon_type: "path"
+      command: "balance"
+      execute_as: "player"
+
+    - text: "§4§l关闭菜单"
+      icon: "textures/blocks/barrier"
+      icon_type: "path"
+      command: ""
+      execute_as: "player"

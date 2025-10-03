@@ -1,0 +1,64 @@
+# java_menus/large_menu.yml
+title: "&6大型菜单 &c&l(54格)"
+rows: 6  # 设置为6行（54格）
+
+items:
+  # 顶部装饰行
+  border_top:
+    slot: 0
+    material: "BLACK_STAINED_GLASS_PANE"
+    name: "&8"
+    lore: []
+
+  # 中间内容区域
+  info:
+    slot: 22
+    material: "PAPER"
+    name: "&e服务器信息"
+    lore:
+      - "&7这是一个54格的大菜单"
+      - "&7完全兼容DeluxeMenus格式"
+      - "&7支持任意槽位设置"
+
+  # 底部功能按钮
+  shop:
+    slot: 38
+    material: "EMERALD"
+    name: "&a商店"
+    lore:
+      - "&7点击打开商店"
+
+  warps:
+    slot: 40
+    material: "COMPASS"
+    name: "&b传送点"
+    lore:
+      - "&7点击查看传送点"
+
+  skills:
+    slot: 42
+    material: "ENCHANTING_TABLE"
+    name: "&d技能"
+    lore:
+      - "&7点击查看技能"
+
+  # 底部装饰行（第6行）
+  back:
+    slot: 49
+    material: "BARRIER"
+    name: "&c返回"
+    lore:
+      - "&7点击返回主菜单"
+    actions:
+      LEFT:
+        - "[menu] main"
+
+  close:
+    slot: 53
+    material: "RED_STAINED_GLASS_PANE"
+    name: "&c关闭"
+    lore:
+      - "&7点击关闭菜单"
+    actions:
+      LEFT:
+        - "[close]"

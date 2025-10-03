@@ -1,0 +1,39 @@
+menu:
+  title: "§l§2商店系统"
+  subtitle: "§7购买你需要的物品"
+  footer: "§8金币: %vault_eco_balance%"
+  items:
+    - text: "§a§l工具商店"
+      icon: "textures/items/diamond_pickaxe"
+      icon_type: "path"
+      command: "shop tools"
+      execute_as: "player"
+
+    - text: "§6§l方块商店"
+      icon: "textures/blocks/brick"
+      icon_type: "path"
+      command: "shop blocks"
+      execute_as: "player"
+
+    - text: "§d§l食物商店"
+      icon: "textures/items/apple"
+      icon_type: "path"
+      command: "shop food"
+      execute_as: "player"
+
+    - text: "§b§l药水商店"
+      icon: "textures/items/potion_bottle_splash_heal"
+      icon_type: "path"
+      command: "shop potions"
+      execute_as: "player"
+
+    - text: "§e§l附魔商店"
+      icon: "textures/items/experience_bottle"
+      icon_type: "path"
+      command: "shop enchantments"
+      execute_as: "player"
+
+    - text: "§c§l返回主菜单"
+      icon: "textures/items/arrow"
+      icon_type: "path"
+      submenu: "main"

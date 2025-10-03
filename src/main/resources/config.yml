@@ -1,0 +1,23 @@
+# DGeyserMenuFlux 主配置
+settings:
+  # 调试模式
+  debug: false
+
+  # 热重载设置
+  hot-reload:
+    enabled: true
+    check-interval: 2000  # 毫秒
+
+  # 菜单设置
+  default-menu: "main"
+
+  # 钟表设置
+  menu-clock:
+    enabled: true
+    give-on-join: true
+
+  # 消息配置
+  messages:
+    no-permission: "&c你没有权限使用此菜单!"
+    menu-not-found: "&c菜单未找到!"
+    reloaded: "&a配置重载完成!"

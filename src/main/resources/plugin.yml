@@ -1,0 +1,39 @@
+name: DGeyserMenuFlux
+version: 1.0
+main: com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux
+api-version: 1.21
+description: 轻量级Java版和基岩版菜单插件
+author: DGeyserMenuFlux
+
+softdepend: [Floodgate, PlaceholderAPI]
+
+commands:
+  dgeysermenu:
+    description: 主命令
+    usage: /<command> <open|reload|help>
+    aliases: [dgm, fluxmenu]
+
+  getmenuclock:
+    description: 获取菜单钟表
+    usage: /<command>
+    permission: dgeysermenu.admin
+
+permissions:
+  dgeysermenu.*:
+    description: 所有权限
+    children:
+      dgeysermenu.use: true
+      dgeysermenu.admin: true
+      dgeysermenu.reload: true
+
+  dgeysermenu.use:
+    description: 使用菜单命令
+    default: true
+
+  dgeysermenu.admin:
+    description: 管理权限
+    default: op
+
+  dgeysermenu.reload:
+    description: 重载插件
+    default: op
