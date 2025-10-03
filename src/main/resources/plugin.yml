@@ -1,5 +1,5 @@
 name: DGeyserMenuFlux
-version: 1.0
+version: 1.01
 main: com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux
 api-version: 1.21
 description: 轻量级Java版和基岩版菜单插件
