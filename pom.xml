@@ -7,7 +7,7 @@
 
     <groupId>com.fluxcraft</groupId>
     <artifactId>d-geyser-menu-flux</artifactId>
-    <version>1.01</version>
+    <version>1.02</version>
     <packaging>jar</packaging>
 
     <name>DGeyserMenuFlux</name>
@@ -40,6 +40,12 @@
             <artifactId>paper-api</artifactId>
             <version>1.21.8-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>3.0.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.geysermc.floodgate</groupId>
