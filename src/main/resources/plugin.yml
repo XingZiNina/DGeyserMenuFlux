@@ -13,7 +13,7 @@ commands:
     description: "打开菜单系统"
     usage: "/<command> open <菜单名> [玩家]"
     permission: dgeysermenu.use
-    aliases: [dmenu, menu]
+    aliases: [dgm]
   getmenuclock:
     description: "获取菜单钟表"
     usage: "/<command>"

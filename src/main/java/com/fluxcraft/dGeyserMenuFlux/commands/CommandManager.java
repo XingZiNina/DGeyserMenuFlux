@@ -29,7 +29,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            sendHelp(sender);
+            sendHelp(sender, label);
             return true;
         }
 
@@ -42,7 +42,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 return handleListCommand(sender);
             case "help":
             default:
-                sendHelp(sender);
+                sendHelp(sender, label);
                 return true;
         }
     }
@@ -58,8 +58,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        final Player player = (Player) sender; // 声明为 final
-        final String menuName = args[1]; // 声明为 final
+        final Player player = (Player) sender;
+        final String menuName = args[1];
         Player targetPlayer = player;
 
         if (args.length >= 3) {
@@ -74,7 +74,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             }
         }
 
-        final Player finalTargetPlayer = targetPlayer; // 创建 final 副本
+        final Player finalTargetPlayer = targetPlayer;
 
         if (!hasMenuPermission(player, menuName)) {
             player.sendMessage("§c你没有权限打开这个菜单!");
@@ -98,7 +98,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             }
         }
 
-        // 使用 final 变量
         final boolean isDifferentPlayer = !finalTargetPlayer.equals(player);
 
         future.thenRun(() -> {
@@ -121,8 +120,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             type = args[1].toLowerCase();
         }
 
-        final String finalType = type; // 创建 final 副本
-        final CommandSender finalSender = sender; // 创建 final 副本
+        final String finalType = type;
+        final CommandSender finalSender = sender;
 
         plugin.runGlobalTask(() -> {
             try {
@@ -179,7 +178,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        final Player player = (Player) sender; // 声明为 final
+        final Player player = (Player) sender;
 
         player.getScheduler().run(plugin, task -> {
             plugin.getClockManager().giveMenuClock(player);
@@ -189,12 +188,12 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void sendHelp(CommandSender sender) {
+    private void sendHelp(CommandSender sender, String label) {
         sender.sendMessage("§6=== DGeyserMenuFlux-Folia 帮助 ===");
-        sender.sendMessage("§f/dgeysermenu open <菜单> [玩家] §7- 打开指定菜单");
-        sender.sendMessage("§f/dgeysermenu reload [all|java|bedrock] §7- 重载插件配置");
-        sender.sendMessage("§f/dgeysermenu list §7- 显示所有可用菜单");
-        sender.sendMessage("§f/dgeysermenu help §7- 显示此帮助");
+        sender.sendMessage("§f/" + label + " open <菜单> [玩家] §7- 打开指定菜单");
+        sender.sendMessage("§f/" + label + " reload [all|java|bedrock] §7- 重载插件配置");
+        sender.sendMessage("§f/" + label + " list §7- 显示所有可用菜单");
+        sender.sendMessage("§f/" + label + " help §7- 显示此帮助");
 
         if (sender.hasPermission("dgeysermenu.admin")) {
             sender.sendMessage("§e管理员权限: §a✓ 可重载配置 §a✓ 可为他人打开菜单");

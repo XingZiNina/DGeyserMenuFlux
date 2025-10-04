@@ -22,8 +22,6 @@ import com.fluxcraft.dGeyserMenuFlux.listeners.ClockInteractionListener;
 
 import org.geysermc.floodgate.api.FloodgateApi;
 
-import org.bstats.bukkit.Metrics;
-
 public final class DGeyserMenuFlux extends JavaPlugin {
 
     private static DGeyserMenuFlux instance;
@@ -37,7 +35,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
     private ReloadCommand reloadCommand;
     private FloodgateApi floodgateApi;
     private GlobalRegionScheduler globalScheduler;
-    private Metrics metrics;
 
     @Override
     public void onEnable() {
@@ -57,7 +54,7 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         registerCommands();
 
         loadPlugin();
-        initializeMetrics();
+        initializeBStats();
 
         getLogger().info("§aDGeyserMenuFlux-Folia v" + getPluginMeta().getVersion() + " 已成功启用!");
     }
@@ -169,12 +166,20 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         }
     }
 
-    private void initializeMetrics() {
+    /**
+     * 初始化 bStats 统计 - Folia 兼容版本
+     */
+    private void initializeBStats() {
         try {
-            int pluginId = 27455;
-            this.metrics = new Metrics(this, pluginId);
+            // 使用反射来避免重定位问题
+            Class<?> metricsClass = Class.forName("org.bstats.bukkit.Metrics");
+            Object metrics = metricsClass.getConstructor(JavaPlugin.class, int.class)
+                    .newInstance(this, 23116);
 
-            getLogger().info("§a已启用 bStats 统计");
+            getLogger().info("§abStats 统计系统已初始化");
+
+        } catch (ClassNotFoundException e) {
+            getLogger().warning("§c未找到 bStats 类，请检查依赖配置");
         } catch (Exception e) {
             getLogger().warning("§c初始化 bStats 统计失败: " + e.getMessage());
         }
@@ -273,10 +278,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
 
     public GlobalRegionScheduler getGlobalScheduler() {
         return globalScheduler;
-    }
-
-    public Metrics getMetrics() {
-        return metrics;
     }
 
     public boolean isBedrockPlayer(java.util.UUID playerUUID) {
