@@ -139,7 +139,7 @@ public final class DGeyserMenuFlux extends JavaPlugin {
 
     private void initializeMetrics() {
         try {
-            int pluginId = 23116;
+            int pluginId = 27455;
             this.metrics = new Metrics(this, pluginId);
 
             getLogger().info("bStats 统计系统已初始化");
