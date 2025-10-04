@@ -1,6 +1,6 @@
 # 🌟 DGeyserMenuFlux - 跨时代的多版本菜单插件
 
-> 🚀 **一款革命性的 Minecraft 菜单插件，完美支持 Java 版与基岩版玩家**
+> 🚀 **为 Folia 服务器设计的一款革命性的 Minecraft 菜单插件，完美支持 Java 版与基岩版玩家**
 
 ---
 
