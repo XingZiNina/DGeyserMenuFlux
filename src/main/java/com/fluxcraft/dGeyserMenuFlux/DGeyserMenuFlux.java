@@ -17,7 +17,6 @@ import com.fluxcraft.dGeyserMenuFlux.utils.MenuClockManager;
 import com.fluxcraft.dGeyserMenuFlux.listeners.ClockInteractionListener;
 
 import org.geysermc.floodgate.api.FloodgateApi;
-import org.bstats.bukkit.Metrics;
 
 public final class DGeyserMenuFlux extends JavaPlugin {
 
@@ -29,7 +28,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
     private CommandManager commandManager;
     private MenuClockManager clockManager;
     private FloodgateApi floodgateApi;
-    private Metrics metrics;
 
     @Override
     public void onEnable() {
@@ -47,7 +45,7 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         loadPlugin();
         initializeHotReload();
         initializeClockSystem();
-        initializeMetrics();
+        initializeBStats();
 
         String version = getPluginMeta().getVersion();
         getLogger().info("DGeyserMenuFlux v" + version + " 已成功启用!");
@@ -137,14 +135,19 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         getLogger().info("菜单钟表系统已初始化");
     }
 
-    private void initializeMetrics() {
+    /**
+     * 简单有效的 bStats 初始化方法
+     */
+    private void initializeBStats() {
         try {
-            int pluginId = 27455;
-            this.metrics = new Metrics(this, pluginId);
-
+            // 直接使用重定位后的类名
+            Class<?> metricsClass = Class.forName("com.fluxcraft.dGeyserMenuFlux.libs.bstats.bukkit.Metrics");
+            Object metrics = metricsClass.getConstructor(JavaPlugin.class, int.class)
+                    .newInstance(this, 27455);
             getLogger().info("bStats 统计系统已初始化");
         } catch (Exception e) {
-            getLogger().warning("初始化 bStats 统计失败: " + e.getMessage());
+            // 如果失败，简单记录警告，不影响插件运行
+            getLogger().warning("bStats 初始化失败，统计功能不可用");
         }
     }
 
@@ -168,7 +171,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
     public CommandManager getCommandManager() { return commandManager; }
     public MenuClockManager getClockManager() { return clockManager; }
     public FloodgateApi getFloodgateApi() { return floodgateApi; }
-    public Metrics getMetrics() { return metrics; }
 
     public boolean isBedrockPlayer(java.util.UUID playerUUID) {
         try {
