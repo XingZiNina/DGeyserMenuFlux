@@ -1,4 +1,5 @@
-```markdown
+[English](./README-en.md) | [中文](../zh/README-zh.md)
+
 # 🌟 DGeyserMenuFlux - The Next-Gen Multi-Version Menu Plugin
 
 > 🚀 **A revolutionary Minecraft menu plugin with seamless Java & Bedrock Edition support**
