@@ -1,6 +1,5 @@
 package com.fluxcraft.dGeyserMenuFlux.bedrockmenu;
 
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
@@ -31,19 +30,13 @@ public class BedrockMenu {
     private void loadMenuItems() {
         menuItems.clear();
 
-        // 首先尝试加载新的菜单格式
         if (config.contains("menu.items")) {
             loadNewFormat();
-        }
-        // 然后尝试加载旧格式
-        else if (config.contains("buttons")) {
+        } else if (config.contains("buttons")) {
             loadLegacyFormat();
-        }
-        // 如果都没有，尝试加载最简格式
-        else if (config.contains("items")) {
+        } else if (config.contains("items")) {
             loadSimpleFormat();
         }
-        // 静默处理没有找到配置的情况
     }
 
     /**
@@ -51,9 +44,7 @@ public class BedrockMenu {
      */
     private void loadNewFormat() {
         List<?> items = config.getList("menu.items");
-        if (items == null) {
-            return;
-        }
+        if (items == null) return;
 
         for (int i = 0; i < items.size(); i++) {
             try {
@@ -69,7 +60,6 @@ public class BedrockMenu {
                     String submenu = itemSection.getString("submenu", "");
                     String executeAs = itemSection.getString("execute_as", "player");
 
-                    // 确保文本不为空
                     if (text == null || text.trim().isEmpty()) {
                         text = "未命名按钮";
                     }
@@ -78,7 +68,6 @@ public class BedrockMenu {
                     menuItems.add(menuItem);
 
                 } else if (itemObj instanceof java.util.Map) {
-                    // 处理Map格式的配置
                     java.util.Map<?, ?> itemMap = (java.util.Map<?, ?>) itemObj;
                     String text = String.valueOf(itemMap.get("text"));
                     String icon = String.valueOf(itemMap.get("icon"));
@@ -110,9 +99,7 @@ public class BedrockMenu {
      */
     private void loadLegacyFormat() {
         List<?> buttons = config.getList("buttons");
-        if (buttons == null) {
-            return;
-        }
+        if (buttons == null) return;
 
         for (int i = 0; i < buttons.size(); i++) {
             try {
@@ -130,14 +117,11 @@ public class BedrockMenu {
                         iconType = buttonSection.getString("image.type", "path");
                     }
 
-                    // 从actions中提取命令
                     String command = extractCommandFromActions(buttonSection.getStringList("actions"));
-
                     BedrockMenuItem menuItem = new BedrockMenuItem(text, icon, iconType, command, "", "player");
                     menuItems.add(menuItem);
 
                 } else if (buttonObj instanceof java.util.Map) {
-                    // 处理Map格式的按钮
                     java.util.Map<?, ?> buttonMap = (java.util.Map<?, ?>) buttonObj;
                     String text = String.valueOf(buttonMap.get("text"));
                     String icon = "";
@@ -207,116 +191,116 @@ public class BedrockMenu {
     }
 
     /**
-     * 为基岩版玩家打开菜单
+     * 为基岩版玩家打开菜单 - Folia 版本（已修复 lambda 问题）
      */
     public void open(Player player) {
-        if (!FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
-            player.sendMessage("§c此菜单仅适用于基岩版玩家");
-            return;
-        }
-
-        try {
-            // 解析菜单元数据
-            String title = parsePlaceholders(player, getMenuTitle());
-            String subtitle = parsePlaceholders(player, getMenuSubtitle());
-            String footer = parsePlaceholders(player, getMenuFooter());
-
-            // 构建内容
-            StringBuilder contentBuilder = new StringBuilder();
-            if (subtitle != null && !subtitle.isEmpty()) {
-                contentBuilder.append(subtitle).append("\n");
+        // 使用 Folia 的 EntityScheduler 在玩家所在线程执行
+        player.getScheduler().run(plugin, task -> {
+            if (!FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+                player.sendMessage("§c此菜单仅适用于基岩版玩家");
+                return;
             }
 
-            String content = contentBuilder.toString();
+            try {
+                String title = parsePlaceholders(player, getMenuTitle());
+                String subtitle = parsePlaceholders(player, getMenuSubtitle());
+                String footer = parsePlaceholders(player, getMenuFooter());
 
-            // 构建表单
-            SimpleForm.Builder form = SimpleForm.builder()
-                    .title(title)
-                    .content(content);
+                StringBuilder contentBuilder = new StringBuilder();
+                if (subtitle != null && !subtitle.isEmpty()) {
+                    contentBuilder.append(subtitle).append("\n");
+                }
 
-            // 添加菜单项到表单
-            if (menuItems.isEmpty()) {
-                form.button("§c没有可用的菜单项");
-            } else {
-                for (BedrockMenuItem menuItem : menuItems) {
-                    String buttonText = parsePlaceholders(player, menuItem.getText());
+                String content = contentBuilder.toString();
 
-                    if (menuItem.hasIcon()) {
-                        FormImage.Type imageType = getImageType(menuItem.getIconType());
-                        form.button(buttonText, FormImage.of(imageType, menuItem.getIcon()));
-                    } else {
-                        form.button(buttonText);
+                SimpleForm.Builder form = SimpleForm.builder()
+                        .title(title)
+                        .content(content);
+
+                if (menuItems.isEmpty()) {
+                    form.button("§c没有可用的菜单项");
+                } else {
+                    for (BedrockMenuItem menuItem : menuItems) {
+                        String buttonText = parsePlaceholders(player, menuItem.getText());
+
+                        if (menuItem.hasIcon()) {
+                            FormImage.Type imageType = getImageType(menuItem.getIconType());
+                            form.button(buttonText, FormImage.of(imageType, menuItem.getIcon()));
+                        } else {
+                            form.button(buttonText);
+                        }
                     }
                 }
-            }
 
-            // 添加页脚信息
-            if (footer != null && !footer.isEmpty()) {
-                String finalContent = content + "\n§8" + footer;
-                form.content(finalContent);
-            }
-
-            // 处理按钮点击事件 - 简化版本
-            form.validResultHandler(response -> {
-                try {
-                    int clickedIndex = response.clickedButtonId();
-
-                    if (clickedIndex >= 0 && clickedIndex < menuItems.size()) {
-                        BedrockMenuItem clickedItem = menuItems.get(clickedIndex);
-                        handleMenuItemClick(player, clickedItem);
-                    }
-                } catch (Exception e) {
-                    // 静默处理错误
+                if (footer != null && !footer.isEmpty()) {
+                    String finalContent = content + "\n§8" + footer;
+                    form.content(finalContent);
                 }
-            });
 
-            // 发送表单给玩家
-            FloodgateApi.getInstance().sendForm(player.getUniqueId(), form.build());
+                // 修复 lambda 问题：创建 final 副本
+                final Player finalPlayer = player;
+                final List<BedrockMenuItem> finalMenuItems = new ArrayList<>(menuItems);
 
-        } catch (Exception e) {
-            player.sendMessage("§c打开菜单时发生错误");
-        }
+                form.validResultHandler(response -> {
+                    // 在玩家线程中处理点击事件
+                    finalPlayer.getScheduler().run(plugin, clickTask -> {
+                        try {
+                            int clickedIndex = response.clickedButtonId();
+                            if (clickedIndex >= 0 && clickedIndex < finalMenuItems.size()) {
+                                BedrockMenuItem clickedItem = finalMenuItems.get(clickedIndex);
+                                handleMenuItemClick(finalPlayer, clickedItem);
+                            }
+                        } catch (Exception e) {
+                            // 静默处理错误
+                        }
+                    }, null);
+                });
+
+                FloodgateApi.getInstance().sendForm(player.getUniqueId(), form.build());
+
+            } catch (Exception e) {
+                player.sendMessage("§c打开菜单时发生错误");
+            }
+        }, null);
     }
 
     /**
-     * 处理菜单项点击 - 简化版本，直接执行命令
+     * 处理菜单项点击 - Folia 版本（已修复 lambda 问题）
      */
     private void handleMenuItemClick(Player player, BedrockMenuItem menuItem) {
         try {
-            // 执行命令
             if (menuItem.getCommand() != null && !menuItem.getCommand().isEmpty()) {
                 String command = parsePlaceholders(player, menuItem.getCommand());
 
-                // 清理命令格式
                 if (command.startsWith("/")) {
                     command = command.substring(1);
                 }
 
+                // 修复 lambda 问题：创建 final 副本
+                final String finalCommand = command;
+                final Player finalPlayer = player;
+
                 if ("console".equalsIgnoreCase(menuItem.getExecuteAs())) {
-                    // 以控制台身份执行
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-                    player.sendMessage("§a命令执行成功!");
+                    // 使用 Folia 的全局调度器执行控制台命令
+                    plugin.runGlobalTask(() -> {
+                        plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), finalCommand);
+                        finalPlayer.sendMessage("§a命令执行成功!");
+                    });
                 } else {
-                    // 以玩家身份执行
-                    player.performCommand(command);
+                    // 在玩家线程中执行玩家命令
+                    finalPlayer.getScheduler().run(plugin, task -> {
+                        finalPlayer.performCommand(finalCommand);
+                    }, null);
                 }
                 return;
             }
 
-            // 打开子菜单
             if (menuItem.getSubmenu() != null && !menuItem.getSubmenu().isEmpty()) {
                 String submenuName = menuItem.getSubmenu().replace(".yml", "");
-
-                // 通过主类打开子菜单
-                com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux plugin =
-                        com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux.getInstance();
-                if (plugin != null) {
-                    plugin.getBedrockMenuManager().openMenu(player, submenuName);
-                }
+                plugin.getBedrockMenuManager().openMenu(player, submenuName);
                 return;
             }
 
-            // 如果没有设置命令和子菜单，显示点击消息
             player.sendMessage("§a你点击了: " + parsePlaceholders(player, menuItem.getText()));
 
         } catch (Exception e) {
@@ -378,33 +362,24 @@ public class BedrockMenu {
     private String parsePlaceholders(Player player, String text) {
         if (text == null) return "";
 
-        // 颜色代码转换
         text = text.replace('&', '§');
 
-        // PlaceholderAPI 支持
-        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            text = PlaceholderAPI.setPlaceholders(player, text);
+        if (plugin.isPlaceholderAPIEnabled()) {
+            try {
+                text = PlaceholderAPI.setPlaceholders(player, text);
+            } catch (Exception e) {
+                // 静默处理错误
+            }
         }
 
         return text;
     }
 
     // Getter 方法
-    public String getName() {
-        return name;
-    }
-
-    public List<BedrockMenuItem> getMenuItems() {
-        return new ArrayList<>(menuItems);
-    }
-
-    public int getMenuItemCount() {
-        return menuItems.size();
-    }
-
-    public boolean hasValidItems() {
-        return !menuItems.isEmpty();
-    }
+    public String getName() { return name; }
+    public List<BedrockMenuItem> getMenuItems() { return new ArrayList<>(menuItems); }
+    public int getMenuItemCount() { return menuItems.size(); }
+    public boolean hasValidItems() { return !menuItems.isEmpty(); }
 
     /**
      * 基岩版菜单项类

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
+import java.util.concurrent.CompletableFuture;
 
 public class CommandManager implements CommandExecutor, TabCompleter {
     private final DGeyserMenuFlux plugin;
@@ -24,12 +24,10 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        // 处理 /getmenuclock 命令
         if ("getmenuclock".equalsIgnoreCase(command.getName())) {
             return handleGetMenuClockCommand(sender);
         }
 
-        // 处理 /dgeysermenu 命令
         if (args.length == 0) {
             sendHelp(sender);
             return true;
@@ -49,9 +47,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
     }
 
-    /**
-     * 处理打开菜单命令
-     */
     private boolean handleOpenCommand(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
             sender.sendMessage("§c只有玩家才能执行此命令!");
@@ -63,11 +58,10 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        Player player = (Player) sender;
-        String menuName = args[1];
+        final Player player = (Player) sender; // 声明为 final
+        final String menuName = args[1]; // 声明为 final
         Player targetPlayer = player;
 
-        // 检查是否有权限打开其他玩家的菜单
         if (args.length >= 3) {
             if (!sender.hasPermission("dgeysermenu.admin")) {
                 sender.sendMessage("§c你没有权限为其他玩家打开菜单!");
@@ -80,44 +74,42 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             }
         }
 
-        // 检查菜单权限
+        final Player finalTargetPlayer = targetPlayer; // 创建 final 副本
+
         if (!hasMenuPermission(player, menuName)) {
             player.sendMessage("§c你没有权限打开这个菜单!");
             return true;
         }
 
-        // 根据玩家类型打开对应菜单
-        try {
-            if (plugin.isBedrockPlayer(targetPlayer.getUniqueId())) {
-                if (plugin.getBedrockMenuManager().menuExists(menuName)) {
-                    plugin.getBedrockMenuManager().openMenu(targetPlayer, menuName);
-                    if (!targetPlayer.equals(player)) {
-                        player.sendMessage("§a已为基岩玩家 " + targetPlayer.getName() + " 打开菜单: " + menuName);
-                    }
-                } else {
-                    player.sendMessage("§c基岩版菜单不存在: " + menuName);
-                }
+        CompletableFuture<Void> future;
+        if (plugin.isBedrockPlayer(finalTargetPlayer.getUniqueId())) {
+            if (plugin.getBedrockMenuManager().menuExists(menuName)) {
+                future = plugin.getBedrockMenuManager().openMenu(finalTargetPlayer, menuName);
             } else {
-                if (plugin.getJavaMenuManager().menuExists(menuName)) {
-                    plugin.getJavaMenuManager().openMenu(targetPlayer, menuName);
-                    if (!targetPlayer.equals(player)) {
-                        player.sendMessage("§a已为Java玩家 " + targetPlayer.getName() + " 打开菜单: " + menuName);
-                    }
-                } else {
-                    player.sendMessage("§cJava版菜单不存在: " + menuName);
-                }
+                player.sendMessage("§c基岩版菜单不存在: " + menuName);
+                return true;
             }
-        } catch (Exception e) {
-            player.sendMessage("§c打开菜单时发生错误!");
-            plugin.getLogger().log(Level.SEVERE, "打开菜单失败: " + menuName, e);
+        } else {
+            if (plugin.getJavaMenuManager().menuExists(menuName)) {
+                future = plugin.getJavaMenuManager().openMenu(finalTargetPlayer, menuName);
+            } else {
+                player.sendMessage("§cJava版菜单不存在: " + menuName);
+                return true;
+            }
         }
+
+        // 使用 final 变量
+        final boolean isDifferentPlayer = !finalTargetPlayer.equals(player);
+
+        future.thenRun(() -> {
+            if (isDifferentPlayer) {
+                player.sendMessage("§a已为玩家 " + finalTargetPlayer.getName() + " 打开菜单: " + menuName);
+            }
+        });
 
         return true;
     }
 
-    /**
-     * 处理重载命令
-     */
     private boolean handleReloadCommand(CommandSender sender, String[] args) {
         if (!sender.hasPermission("dgeysermenu.reload")) {
             sender.sendMessage("§c你没有权限执行此命令!");
@@ -129,41 +121,34 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             type = args[1].toLowerCase();
         }
 
-        try {
-            switch (type) {
-                case "java":
-                    plugin.getJavaMenuManager().reloadMenus();
-                    sender.sendMessage("§aJava版菜单重载完成! 已加载 " +
-                            plugin.getJavaMenuManager().getLoadedMenuCount() + " 个菜单");
-                    break;
-                case "bedrock":
-                    plugin.getBedrockMenuManager().reloadMenus();
-                    sender.sendMessage("§a基岩版菜单重载完成! 已加载 " +
-                            plugin.getBedrockMenuManager().getLoadedMenuCount() + " 个菜单");
-                    break;
-                case "all":
-                default:
-                    plugin.reloadPlugin();
-                    sender.sendMessage("§a所有菜单重载完成! Java: " +
-                            plugin.getJavaMenuManager().getLoadedMenuCount() +
-                            ", 基岩: " + plugin.getBedrockMenuManager().getLoadedMenuCount());
-                    break;
+        final String finalType = type; // 创建 final 副本
+        final CommandSender finalSender = sender; // 创建 final 副本
+
+        plugin.runGlobalTask(() -> {
+            try {
+                switch (finalType) {
+                    case "java":
+                        plugin.getJavaMenuManager().reloadMenus();
+                        finalSender.sendMessage("§aJava版菜单重载完成!");
+                        break;
+                    case "bedrock":
+                        plugin.getBedrockMenuManager().reloadMenus();
+                        finalSender.sendMessage("§a基岩版菜单重载完成!");
+                        break;
+                    case "all":
+                    default:
+                        plugin.reloadPlugin();
+                        finalSender.sendMessage("§a所有菜单重载完成!");
+                        break;
+                }
+            } catch (Exception e) {
+                finalSender.sendMessage("§c重载时发生错误: " + e.getMessage());
             }
-
-            String playerName = sender instanceof Player ? sender.getName() : "控制台";
-            plugin.getLogger().info("菜单配置已由 " + playerName + " 重载 (" + type + ")");
-
-        } catch (Exception e) {
-            sender.sendMessage("§c重载时发生错误: " + e.getMessage());
-            plugin.getLogger().log(Level.SEVERE, "重载菜单时发生错误", e);
-        }
+        });
 
         return true;
     }
 
-    /**
-     * 处理列出菜单命令
-     */
     private boolean handleListCommand(CommandSender sender) {
         if (!sender.hasPermission("dgeysermenu.use")) {
             sender.sendMessage("§c你没有权限执行此命令!");
@@ -183,9 +168,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    /**
-     * 处理获取菜单钟表命令
-     */
     private boolean handleGetMenuClockCommand(CommandSender sender) {
         if (!(sender instanceof Player)) {
             sender.sendMessage("§c只有玩家才能执行此命令!");
@@ -197,18 +179,18 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        Player player = (Player) sender;
-        plugin.getClockManager().giveMenuClock(player);
-        player.sendMessage("§a已获得菜单钟表!");
+        final Player player = (Player) sender; // 声明为 final
+
+        player.getScheduler().run(plugin, task -> {
+            plugin.getClockManager().giveMenuClock(player);
+            player.sendMessage("§a已获得菜单钟表!");
+        }, null);
 
         return true;
     }
 
-    /**
-     * 发送帮助信息
-     */
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage("§6=== DGeyserMenuFlux 帮助 ===");
+        sender.sendMessage("§6=== DGeyserMenuFlux-Folia 帮助 ===");
         sender.sendMessage("§f/dgeysermenu open <菜单> [玩家] §7- 打开指定菜单");
         sender.sendMessage("§f/dgeysermenu reload [all|java|bedrock] §7- 重载插件配置");
         sender.sendMessage("§f/dgeysermenu list §7- 显示所有可用菜单");
@@ -220,9 +202,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
     }
 
-    /**
-     * 检查菜单权限
-     */
     private boolean hasMenuPermission(Player player, String menuName) {
         if (player.hasPermission("dgeysermenu.admin") || player.hasPermission("dgeysermenu.*")) {
             return true;
@@ -238,14 +217,11 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                                       @NotNull String alias, @NotNull String[] args) {
         List<String> completions = new ArrayList<>();
 
-        // 处理 /getmenuclock 命令的Tab补全（无参数）
         if ("getmenuclock".equalsIgnoreCase(command.getName())) {
-            return completions; // 无参数可补全
+            return completions;
         }
 
-        // 处理 /dgeysermenu 命令的Tab补全
         if (args.length == 1) {
-            // 主命令Tab补全
             List<String> commands = Arrays.asList("open", "reload", "help", "list");
             for (String cmd : commands) {
                 if (cmd.toLowerCase().startsWith(args[0].toLowerCase())) {
@@ -253,20 +229,16 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 }
             }
         } else if (args.length == 2) {
-            // 子命令Tab补全
             switch (args[0].toLowerCase()) {
                 case "open":
-                    // 动态获取所有可用的菜单名称
                     completions.addAll(plugin.getConfigManager().getAllMenuNames());
                     break;
                 case "reload":
                     completions.addAll(Arrays.asList("all", "java", "bedrock"));
                     break;
             }
-            // 过滤匹配
             completions.removeIf(s -> !s.toLowerCase().startsWith(args[1].toLowerCase()));
         } else if (args.length == 3 && args[0].equalsIgnoreCase("open")) {
-            // 玩家名称补全（仅管理员）
             if (sender.hasPermission("dgeysermenu.admin")) {
                 completions.addAll(getOnlinePlayerNames());
                 completions.removeIf(s -> !s.toLowerCase().startsWith(args[2].toLowerCase()));
@@ -276,9 +248,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         return completions;
     }
 
-    /**
-     * 获取在线玩家名称列表
-     */
     private List<String> getOnlinePlayerNames() {
         List<String> names = new ArrayList<>();
         for (Player player : plugin.getServer().getOnlinePlayers()) {

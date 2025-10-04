@@ -19,28 +19,23 @@ public class ClockInteractionListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        // 只处理右手交互（避免重复触发）
         if (event.getHand() != EquipmentSlot.HAND) {
             return;
         }
 
-        // 检查是否是右键点击空气或方块
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
-        // 检查手持物品是否是菜单钟表
         if (!clockManager.isMenuClock(event.getItem())) {
             return;
         }
 
-        // 取消事件（防止放置钟表等操作）
         event.setCancelled(true);
 
-        // 打开菜单
-        clockManager.openMenuWithClock(event.getPlayer());
-
-        // 移除日志输出
-        // plugin.getLogger().info("玩家 " + event.getPlayer().getName() + " 使用钟表打开菜单");
+        // 在玩家线程中打开菜单
+        event.getPlayer().getScheduler().run(plugin, task -> {
+            clockManager.openMenuWithClock(event.getPlayer());
+        }, null);
     }
 }

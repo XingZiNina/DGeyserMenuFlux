@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
@@ -29,9 +30,7 @@ public class JavaMenuListener implements Listener {
         InventoryView view = event.getView();
         Inventory clickedInventory = event.getClickedInventory();
 
-        // 检查点击的库存是否是菜单库存（通过持有者检测）
         if (clickedInventory != null && clickedInventory.getHolder() instanceof JavaMenu.MenuHolder) {
-            // 取消所有点击事件，防止物品被移动
             event.setCancelled(true);
 
             ItemStack clickedItem = event.getCurrentItem();
@@ -43,14 +42,17 @@ public class JavaMenuListener implements Listener {
             JavaMenu.MenuItem menuItem = menu.getItemAtSlot(event.getSlot());
             if (menuItem == null) return;
 
-            // 确定点击类型
-            String clickType = "LEFT";
+            String clickType;
             if (event.isRightClick()) {
                 clickType = "RIGHT";
+            } else {
+                clickType = "LEFT";
             }
 
-            // 执行菜单项的命令
-            executeMenuItemCommands(player, menuItem, clickType);
+            // 在玩家所在线程执行命令
+            player.getScheduler().run(plugin, task -> {
+                executeMenuItemCommands(player, menuItem, clickType);
+            }, null);
         }
     }
 
@@ -60,31 +62,28 @@ public class JavaMenuListener implements Listener {
 
         InventoryView view = event.getView();
 
-        // 检查拖拽是否涉及菜单库存
         for (Integer slot : event.getRawSlots()) {
             if (slot < view.getTopInventory().getSize()) {
-                // 拖拽涉及顶部库存（菜单），取消事件
                 event.setCancelled(true);
                 return;
             }
         }
     }
 
-    /**
-     * 执行菜单项的命令
-     */
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        // 静默处理关闭事件
+    }
+
     private void executeMenuItemCommands(Player player, JavaMenu.MenuItem menuItem, String clickType) {
-        // 获取对应点击类型的命令
         List<String> commands = menuItem.getActions(clickType);
         if (commands.isEmpty()) {
-            // 如果没有特定类型的命令，尝试通用命令
             commands = menuItem.getActions("ALL");
             if (commands.isEmpty()) {
-                return; // 静默返回，不发送消息
+                return;
             }
         }
 
-        // 执行每个命令
         for (String command : commands) {
             if (command != null && !command.trim().isEmpty()) {
                 executeCommand(player, command.trim());
@@ -92,15 +91,10 @@ public class JavaMenuListener implements Listener {
         }
     }
 
-    /**
-     * 执行单个命令
-     */
     private void executeCommand(Player player, String command) {
         try {
-            // 解析占位符
             String parsedCommand = parsePlaceholders(player, command);
 
-            // 根据命令前缀执行不同的操作
             if (parsedCommand.startsWith("[player]")) {
                 String actualCommand = parsedCommand.substring(8).trim();
                 executePlayerCommand(player, actualCommand);
@@ -129,7 +123,6 @@ public class JavaMenuListener implements Listener {
                 openMenu(player, menuName);
 
             } else {
-                // 默认情况下，以玩家身份执行命令
                 executePlayerCommand(player, parsedCommand);
             }
 
@@ -138,9 +131,6 @@ public class JavaMenuListener implements Listener {
         }
     }
 
-    /**
-     * 以玩家身份执行命令
-     */
     private void executePlayerCommand(Player player, String command) {
         if (command.startsWith("/")) {
             command = command.substring(1);
@@ -148,9 +138,6 @@ public class JavaMenuListener implements Listener {
         player.performCommand(command);
     }
 
-    /**
-     * 以控制台身份执行命令
-     */
     private void executeConsoleCommand(String command) {
         if (command.startsWith("/")) {
             command = command.substring(1);
@@ -158,9 +145,6 @@ public class JavaMenuListener implements Listener {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
     }
 
-    /**
-     * 以OP身份执行命令
-     */
     private void executeOpCommand(Player player, String command) {
         if (command.startsWith("/")) {
             command = command.substring(1);
@@ -175,39 +159,24 @@ public class JavaMenuListener implements Listener {
         }
     }
 
-    /**
-     * 发送消息给玩家
-     */
     private void sendMessage(Player player, String message) {
         String parsedMessage = parsePlaceholders(player, message);
         player.sendMessage(parsedMessage);
     }
 
-    /**
-     * 广播消息
-     */
     private void broadcastMessage(String message) {
         String parsedMessage = parsePlaceholders(null, message);
         Bukkit.broadcastMessage(parsedMessage);
     }
 
-    /**
-     * 打开其他菜单
-     */
     private void openMenu(Player player, String menuName) {
         plugin.getJavaMenuManager().openMenu(player, menuName);
     }
 
-    /**
-     * 解析占位符
-     */
     private String parsePlaceholders(Player player, String text) {
         if (text == null) return "";
-
-        // 首先转换颜色代码
         text = text.replace('&', '§');
 
-        // 如果有玩家且PlaceholderAPI可用，解析占位符
         if (player != null && plugin.isPlaceholderAPIEnabled()) {
             try {
                 text = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, text);

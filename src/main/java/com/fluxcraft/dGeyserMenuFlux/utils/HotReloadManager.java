@@ -21,15 +21,19 @@ public class HotReloadManager {
             Path javaMenusPath = Paths.get(plugin.getDataFolder().getAbsolutePath(), "java_menus");
             Path bedrockMenusPath = Paths.get(plugin.getDataFolder().getAbsolutePath(), "bedrock_menus");
 
-            // 注册监听
             javaMenusPath.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
             bedrockMenusPath.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
 
-            this.executor = Executors.newSingleThreadScheduledExecutor();
+            this.executor = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "DGeyserMenuFlux-HotReload");
+                t.setDaemon(true);
+                return t;
+            });
+
             executor.scheduleAtFixedRate(this::checkForChanges, 0, 2, TimeUnit.SECONDS);
 
         } catch (Exception e) {
-            plugin.getLogger().warning("无法初始化热重载: " + e.getMessage());
+            // 静默处理错误
         }
     }
 
@@ -42,9 +46,8 @@ public class HotReloadManager {
                     String fileName = changedFile.toString();
 
                     if (fileName.endsWith(".yml")) {
-                        plugin.getLogger().info("检测到菜单文件变化: " + fileName + ", 重新加载...");
-                        // 延迟重载以避免文件写入中
-                        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                        // 使用 Folia 的全局调度器重载
+                        plugin.runDelayedGlobalTask(() -> {
                             plugin.getConfigManager().reloadAllMenus();
                             plugin.getJavaMenuManager().reloadMenus();
                             plugin.getBedrockMenuManager().reloadMenus();
@@ -54,7 +57,7 @@ public class HotReloadManager {
                 key.reset();
             }
         } catch (Exception e) {
-            plugin.getLogger().warning("热重载检查错误: " + e.getMessage());
+            // 静默处理错误
         }
     }
 

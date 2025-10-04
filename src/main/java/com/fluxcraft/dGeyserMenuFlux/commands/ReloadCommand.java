@@ -22,34 +22,37 @@ public class ReloadCommand {
             type = args[1].toLowerCase();
         }
 
-        try {
-            switch (type) {
-                case "java":
-                    plugin.getJavaMenuManager().reloadMenus();
-                    sender.sendMessage("§aJava版菜单重载完成!");
-                    break;
-                case "bedrock":
-                    plugin.getBedrockMenuManager().reloadMenus();
-                    sender.sendMessage("§a基岩版菜单重载完成!");
-                    break;
-                case "all":
-                default:
-                    plugin.getConfigManager().reloadAllMenus();
-                    plugin.getJavaMenuManager().reloadMenus();
-                    plugin.getBedrockMenuManager().reloadMenus();
-                    sender.sendMessage("§a所有菜单重载完成!");
-                    break;
+        final String finalType = type;
+        final CommandSender finalSender = sender;
+
+        // 使用 Folia 的全局调度器执行重载
+        plugin.runGlobalTask(() -> {
+            try {
+                switch (finalType) {
+                    case "java":
+                        plugin.getJavaMenuManager().reloadMenus();
+                        finalSender.sendMessage("§aJava版菜单重载完成!");
+                        break;
+                    case "bedrock":
+                        plugin.getBedrockMenuManager().reloadMenus();
+                        finalSender.sendMessage("§a基岩版菜单重载完成!");
+                        break;
+                    case "all":
+                    default:
+                        plugin.reloadPlugin();
+                        finalSender.sendMessage("§a所有菜单重载完成!");
+                        break;
+                }
+
+                // 记录到控制台
+                String playerName = finalSender instanceof Player ? finalSender.getName() : "控制台";
+                plugin.getLogger().info("菜单配置已由 " + playerName + " 重载 (" + finalType + ")");
+
+            } catch (Exception e) {
+                finalSender.sendMessage("§c重载时发生错误: " + e.getMessage());
+                plugin.getLogger().severe("重载菜单时发生错误: " + e.getMessage());
             }
-
-            // 记录到控制台
-            String playerName = sender instanceof Player ? sender.getName() : "控制台";
-            plugin.getLogger().info("菜单配置已由 " + playerName + " 重载 (" + type + ")");
-
-        } catch (Exception e) {
-            sender.sendMessage("§c重载时发生错误: " + e.getMessage());
-            plugin.getLogger().severe("重载菜单时发生错误: " + e.getMessage());
-            e.printStackTrace();
-        }
+        });
 
         return true;
     }

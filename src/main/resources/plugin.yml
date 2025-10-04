@@ -1,39 +1,34 @@
-name: DGeyserMenuFlux
-version: 1.01
+name: DGeyserMenuFlux-Folia
+version: 1.0.1
 main: com.fluxcraft.dGeyserMenuFlux.DGeyserMenuFlux
-api-version: 1.21
-description: 轻量级Java版和基岩版菜单插件
-author: DGeyserMenuFlux
+api-version: "1.21"
+folia-supported: true
+description: "支持Folia的跨时代多版本菜单插件"
+author: FluxCraft
 
-softdepend: [Floodgate, PlaceholderAPI]
+softdepend: [floodgate, PlaceholderAPI]
 
 commands:
   dgeysermenu:
-    description: 主命令
-    usage: /<command> <open|reload|help>
-    aliases: [dgm, fluxmenu]
-
+    description: "打开菜单系统"
+    usage: "/<command> open <菜单名> [玩家]"
+    permission: dgeysermenu.use
+    aliases: [dmenu, menu]
   getmenuclock:
-    description: 获取菜单钟表
-    usage: /<command>
+    description: "获取菜单钟表"
+    usage: "/<command>"
     permission: dgeysermenu.admin
+    aliases: [menuclock]
 
 permissions:
-  dgeysermenu.*:
-    description: 所有权限
-    children:
-      dgeysermenu.use: true
-      dgeysermenu.admin: true
-      dgeysermenu.reload: true
-
   dgeysermenu.use:
-    description: 使用菜单命令
+    description: "允许使用基础菜单功能"
     default: true
 
-  dgeysermenu.admin:
-    description: 管理权限
+  dgeysermenu.reload:
+    description: "允许重载插件配置"
     default: op
 
-  dgeysermenu.reload:
-    description: 重载插件
+  dgeysermenu.admin:
+    description: "管理员权限"
     default: op

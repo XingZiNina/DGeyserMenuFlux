@@ -146,14 +146,14 @@ items:
     slot: 0-8
     material: BLACK_STAINED_GLASS_PANE
     display_name: " "
-  
+
   border_bottom:
     slot: 45-53
     material: BLACK_STAINED_GLASS_PANE
     display_name: " "
 
   border_sides:
-    slot: 
+    slot:
       - 9
       - 17
       - 18
