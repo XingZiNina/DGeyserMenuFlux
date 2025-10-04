@@ -22,6 +22,8 @@ import com.fluxcraft.dGeyserMenuFlux.listeners.ClockInteractionListener;
 
 import org.geysermc.floodgate.api.FloodgateApi;
 
+import org.bstats.bukkit.Metrics;
+
 public final class DGeyserMenuFlux extends JavaPlugin {
 
     private static DGeyserMenuFlux instance;
@@ -35,13 +37,13 @@ public final class DGeyserMenuFlux extends JavaPlugin {
     private ReloadCommand reloadCommand;
     private FloodgateApi floodgateApi;
     private GlobalRegionScheduler globalScheduler;
+    private Metrics metrics;
 
     @Override
     public void onEnable() {
         instance = this;
         this.globalScheduler = getServer().getGlobalRegionScheduler();
 
-        // 首先初始化配置管理器
         this.configManager = new ConfigManager(this);
 
         if (!initializeFloodgate()) {
@@ -50,15 +52,14 @@ public final class DGeyserMenuFlux extends JavaPlugin {
             return;
         }
 
-        // 然后初始化其他管理器
         initializeManagers();
         registerListeners();
         registerCommands();
 
-        // 在全局调度器中加载插件
         loadPlugin();
+        initializeMetrics();
 
-        getLogger().info("§aDGeyserMenuFlux-Folia v" + getDescription().getVersion() + " 已成功启用!");
+        getLogger().info("§aDGeyserMenuFlux-Folia v" + getPluginMeta().getVersion() + " 已成功启用!");
     }
 
     @Override
@@ -85,7 +86,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
     }
 
     private void initializeManagers() {
-        // ConfigManager 已经在构造函数中初始化
         this.javaMenuManager = new JavaMenuManager(this);
         this.bedrockMenuManager = new BedrockMenuManager(this);
         this.hotReloadManager = new HotReloadManager(this);
@@ -122,7 +122,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
     private void loadPlugin() {
         globalScheduler.run(this, task -> {
             try {
-                // 确保配置已加载
                 if (configManager.getConfig() == null) {
                     getLogger().warning("§c配置为空，重新加载配置");
                     configManager.loadConfig();
@@ -135,7 +134,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
                 getLogger().info("§aJava菜单: " + javaMenuManager.getLoadedMenuCount() + " 个");
                 getLogger().info("§a基岩菜单: " + bedrockMenuManager.getLoadedMenuCount() + " 个");
 
-                // 配置加载完成后，初始化热重载和钟表系统
                 initializeHotReload();
                 initializeClockSystem();
 
@@ -171,9 +169,17 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         }
     }
 
-    /**
-     * 重新加载整个插件 - Folia 版本
-     */
+    private void initializeMetrics() {
+        try {
+            int pluginId = 27455;
+            this.metrics = new Metrics(this, pluginId);
+
+            getLogger().info("§a已启用 bStats 统计");
+        } catch (Exception e) {
+            getLogger().warning("§c初始化 bStats 统计失败: " + e.getMessage());
+        }
+    }
+
     public void reloadPlugin() {
         globalScheduler.run(this, task -> {
             try {
@@ -192,66 +198,38 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         });
     }
 
-    // ========== Folia 任务调度方法 ==========
-
-    /**
-     * 在全局区域执行任务
-     */
     public void runGlobalTask(Runnable task) {
         globalScheduler.run(this, scheduledTask -> task.run());
     }
 
-    /**
-     * 延迟在全局区域执行任务
-     */
     public void runDelayedGlobalTask(Runnable task, long delayTicks) {
         globalScheduler.runDelayed(this, scheduledTask -> task.run(), delayTicks);
     }
 
-    /**
-     * 在指定位置区域执行任务
-     */
     public void runAtLocation(org.bukkit.Location location, Runnable task) {
         getServer().getRegionScheduler().run(this, location, scheduledTask -> task.run());
     }
 
-    /**
-     * 延迟在指定位置区域执行任务
-     */
     public void runDelayedAtLocation(org.bukkit.Location location, Runnable task, long delayTicks) {
         getServer().getRegionScheduler().runDelayed(this, location, scheduledTask -> task.run(), delayTicks);
     }
 
-    /**
-     * 在玩家实体调度器执行任务
-     */
     public void runAtPlayer(org.bukkit.entity.Player player, Runnable task) {
         player.getScheduler().run(this, scheduledTask -> task.run(), null);
     }
 
-    /**
-     * 延迟在玩家实体调度器执行任务
-     */
     public void runDelayedAtPlayer(org.bukkit.entity.Player player, Runnable task, long delayTicks) {
         player.getScheduler().runDelayed(this, scheduledTask -> task.run(), null, delayTicks);
     }
 
-    /**
-     * 异步执行任务（不涉及世界操作）
-     */
     public void runAsyncTask(Runnable task) {
         getServer().getAsyncScheduler().runNow(this, scheduledTask -> task.run());
     }
 
-    /**
-     * 延迟异步执行任务
-     */
     public void runDelayedAsyncTask(Runnable task, long delayTicks) {
         getServer().getAsyncScheduler().runDelayed(this, scheduledTask -> task.run(),
                 delayTicks * 50, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
-
-    // ========== Getter 方法 ==========
 
     public static DGeyserMenuFlux getInstance() {
         return instance;
@@ -297,11 +275,10 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         return globalScheduler;
     }
 
-    // ========== 工具方法 ==========
+    public Metrics getMetrics() {
+        return metrics;
+    }
 
-    /**
-     * 检查玩家是否是基岩版玩家
-     */
     public boolean isBedrockPlayer(java.util.UUID playerUUID) {
         try {
             return floodgateApi != null && floodgateApi.isFloodgatePlayer(playerUUID);
@@ -310,53 +287,32 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         }
     }
 
-    /**
-     * 检查 PlaceholderAPI 是否启用
-     */
     public boolean isPlaceholderAPIEnabled() {
         return getServer().getPluginManager().isPluginEnabled("PlaceholderAPI");
     }
 
-    /**
-     * 获取插件数据文件夹下的文件
-     */
     public File getFile(String path) {
         return new File(getDataFolder(), path);
     }
 
-    /**
-     * 获取默认菜单名称
-     */
     public String getDefaultMenu() {
         return configManager.getDefaultMenu();
     }
 
-    /**
-     * 检查调试模式是否启用
-     */
     public boolean isDebugEnabled() {
         return configManager.isDebugEnabled();
     }
 
-    /**
-     * 调试日志输出
-     */
     public void debug(String message) {
         if (isDebugEnabled()) {
             getLogger().info("§7[DEBUG] " + message);
         }
     }
 
-    /**
-     * 获取所有菜单名称
-     */
     public java.util.Set<String> getAllMenuNames() {
         return configManager.getAllMenuNames();
     }
 
-    /**
-     * 获取插件统计信息
-     */
     public String getPluginStatistics() {
         return String.format(
                 "DGeyserMenuFlux-Folia 统计: Java菜单=%d, 基岩菜单=%d, 热重载=%s, 调试=%s",
@@ -367,9 +323,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         );
     }
 
-    /**
-     * 执行安全检查的任务
-     */
     public void runSafeTask(org.bukkit.entity.Player player, Runnable task) {
         if (player != null && player.isOnline()) {
             runAtPlayer(player, task);
@@ -378,9 +331,6 @@ public final class DGeyserMenuFlux extends JavaPlugin {
         }
     }
 
-    /**
-     * 批量执行玩家任务
-     */
     public void runBatchPlayerTasks(java.util.List<org.bukkit.entity.Player> players, java.util.function.Consumer<org.bukkit.entity.Player> task) {
         for (org.bukkit.entity.Player player : players) {
             if (player.isOnline()) {
